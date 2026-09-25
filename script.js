@@ -8,6 +8,18 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
 
     let isEditingDates = false;
 
+    function getItemStatus(item) {
+        if (!item) return 0;
+        if (item.status !== undefined && item.status !== null) {
+            if (typeof item.status === 'number') return item.status;
+            if (item.status === 'ready' || item.status === 1) return 1;
+            if (item.status === 'packed' || item.status === 2) return 2;
+            return 0;
+        }
+        return item.checked ? 2 : 0;
+    }
+
+
     if (localStorage.getItem('theme') === 'dark' || (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         document.documentElement.classList.add('dark');
     }
@@ -103,8 +115,10 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
         } else {
             lists.forEach(list => {
                 const total = list.categories.reduce((acc, cat) => acc + (cat.items || []).length, 0);
-                const checked = list.categories.reduce((acc, cat) => acc + (cat.items || []).filter(i => i.checked).length, 0);
-                const progress = total === 0 ? 0 : Math.round((checked / total) * 100);
+                const packed = list.categories.reduce((acc, cat) => acc + (cat.items || []).filter(i => getItemStatus(i) === 2).length, 0);
+                const ready = list.categories.reduce((acc, cat) => acc + (cat.items || []).filter(i => getItemStatus(i) === 1).length, 0);
+                const packedProgress = total === 0 ? 0 : Math.round((packed / total) * 100);
+                const readyProgress = total === 0 ? 0 : Math.round((ready / total) * 100);
                 const dateDisplay = (list.startDate || list.endDate) ? `${formatDate(list.startDate) || '?'} — ${formatDate(list.endDate) || '?'}` : "Zeitraum planen";
 
                 const card = document.createElement('div');
@@ -117,9 +131,14 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
                         <button onclick="event.stopPropagation(); deleteList('${list.id}')" class="p-2 text-slate-300 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
                     <h3 class="font-bold text-xl mb-1 dark:text-white overflow-hidden text-ellipsis whitespace-nowrap">${list.name}</h3>
-                    <p class="text-sm text-slate-400 dark:text-slate-500 mb-6 flex items-center gap-2"><i data-lucide="calendar" class="w-4 h-4"></i> ${dateDisplay}</p>
-                    <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden mt-6">
-                        <div class="h-full transition-all duration-700" style="width: ${progress}%; background-color: ${list.color}"></div>
+                    <p class="text-sm text-slate-400 dark:text-slate-500 mb-4 flex items-center gap-2"><i data-lucide="calendar" class="w-4 h-4"></i> ${dateDisplay}</p>
+                    <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">
+                        <span>${packed}/${total} eingepackt</span>
+                        ${ready > 0 ? `<span class="text-pink-500 font-bold flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-pink-400"></span>${ready} bereit</span>` : ''}
+                    </div>
+                    <div class="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden flex">
+                        <div class="h-full transition-all duration-500" style="width: ${packedProgress}%; background-color: ${list.color}"></div>
+                        <div class="h-full transition-all duration-500 bg-pink-400 dark:bg-pink-500" style="width: ${readyProgress}%"></div>
                     </div>`;
                 dashboard.appendChild(card);
             });
@@ -204,6 +223,13 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
                     <div class="flex flex-wrap items-center gap-3">
                          ${dateSectionHTML}
                          <div class="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block"></div>
+
+                         <!-- Live Packing Stats Badge -->
+                         <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 shadow-sm">
+                             <span class="inline-block w-2.5 h-2.5 rounded-full" style="background-color: ${list.color || '#4f46e5'}"></span>
+                             <span>${list.categories.reduce((acc, cat) => acc + (cat.items || []).filter(i => getItemStatus(i) === 2).length, 0)}/${list.categories.reduce((acc, cat) => acc + (cat.items || []).length, 0)} eingepackt</span>
+                             ${list.categories.reduce((acc, cat) => acc + (cat.items || []).filter(i => getItemStatus(i) === 1).length, 0) > 0 ? `<span class="text-slate-300 dark:text-slate-600">|</span><span class="text-pink-500 font-bold flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-pink-400"></span>${list.categories.reduce((acc, cat) => acc + (cat.items || []).filter(i => getItemStatus(i) === 1).length, 0)} bereit</span>` : ''}
+                         </div>
 
                          <!-- Sexy Polished Color Picker -->
                          <div class="flex items-center gap-3 relative">
@@ -290,13 +316,34 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
                         ${cat.items.map((item, itemIdx) => {
                 const itemId = `item-row-${catIdx}-${itemIdx}`;
                 const itemInputId = `input-${catIdx}-${itemIdx}`;
+                const status = getItemStatus(item);
+                let boxClass = "packer-box state-empty";
+                let boxContent = "";
+                let boxStyle = "";
+                let textClass = "";
+
+                if (status === 1) {
+                    boxClass = "packer-box state-ready";
+                    boxContent = `<span class="box-indicator"></span>`;
+                    textClass = "ready-item";
+                } else if (status === 2) {
+                    boxClass = "packer-box state-packed";
+                    boxContent = `<span class="box-indicator"><svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>`;
+                    boxStyle = `background-color: ${list.color || '#4f46e5'}; border-color: ${list.color || '#4f46e5'};`;
+                    textClass = "checked-item";
+                }
+
+                const statusTitles = ["Offen (Klick: Liegt bereit)", "Liegt bereit (Klick: Eingepackt)", "Eingepackt (Klick: Zurücksetzen)"];
+
                 return `
                             <div id="${itemId}" class="item-row overflow-hidden" ondragstart="handleDragStart(event, 'item', ${itemIdx}, ${catIdx})" ondragover="handleDragOver(event, 'item', ${itemIdx}, ${catIdx})" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'item', ${itemIdx}, ${catIdx})" ondragend="handleDragEnd(event)">
-                                <div class="flex items-center gap-2 md:gap-3 p-2 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/40 group relative transition-colors">
+                                <div class="flex items-center gap-2 md:gap-3 p-2 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/40 group relative transition-colors ${status === 1 ? 'bg-pink-50/40 dark:bg-pink-950/20' : ''}">
                                     <div class="grip-handle text-slate-200 dark:text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" onmousedown="enableDrag('${itemId}', true)" onmouseup="enableDrag('${itemId}', false)" onmouseleave="enableDrag('${itemId}', false)"><i data-lucide="grip-vertical" class="w-4 h-4"></i></div>
-                                    <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleItem(${catIdx}, ${itemIdx})" class="flex-shrink-0">
+                                    <button type="button" onclick="cycleItemStatus(${catIdx}, ${itemIdx})" class="${boxClass}" style="${boxStyle}" title="${statusTitles[status]}" aria-label="${statusTitles[status]}">
+                                        ${boxContent}
+                                    </button>
 
-                                    <input id="${itemInputId}" type="text" value="${escapeHtml(item.text)}" onfocus="setTimeout(() => this.select(), 10)" oninput="updateItemText(${catIdx}, ${itemIdx}, this.value, false)" class="flex-grow border-none bg-transparent focus:ring-0 p-0 font-bold dark:text-slate-100 min-w-0 text-ellipsis ${item.checked ? 'checked-item' : ''}">
+                                    <input id="${itemInputId}" type="text" value="${escapeHtml(item.text)}" onfocus="setTimeout(() => this.select(), 10)" oninput="updateItemText(${catIdx}, ${itemIdx}, this.value, false)" class="flex-grow border-none bg-transparent focus:ring-0 p-0 font-bold dark:text-slate-100 min-w-0 text-ellipsis transition-colors ${textClass}">
 
                                     <div class="flex items-center gap-0.5 sm:gap-1 flex-shrink-0 justify-end">
                                         <button onclick="addSubItem(${catIdx}, ${itemIdx})" class="p-1.5 sm:p-2 text-slate-400 hover:text-indigo-600 transition-colors flex-shrink-0" title="Unterliste"><i data-lucide="list-plus" class="w-4 h-4"></i></button>
@@ -313,17 +360,36 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
                                         ${item.subItems.map((sub, subIdx) => {
                     const subId = `sub-item-${catIdx}-${itemIdx}-${subIdx}`;
                     const subInputId = `subinput-${catIdx}-${itemIdx}-${subIdx}`;
+                    const subStatus = getItemStatus(sub);
+                    let subBoxClass = "packer-box sub-box state-empty";
+                    let subBoxContent = "";
+                    let subBoxStyle = "";
+                    let subTextClass = "";
+
+                    if (subStatus === 1) {
+                        subBoxClass = "packer-box sub-box state-ready";
+                        subBoxContent = `<span class="box-indicator"></span>`;
+                        subTextClass = "ready-item";
+                    } else if (subStatus === 2) {
+                        subBoxClass = "packer-box sub-box state-packed";
+                        subBoxContent = `<span class="box-indicator"><svg class="w-2.5 h-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>`;
+                        subBoxStyle = `background-color: ${list.color || '#4f46e5'}; border-color: ${list.color || '#4f46e5'};`;
+                        subTextClass = "checked-item";
+                    }
+
                     return `
-                                            <div id="${subId}" class="flex items-center gap-2 p-1 group/sub rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors overflow-hidden"
+                                            <div id="${subId}" class="flex items-center gap-2 p-1 group/sub rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors overflow-hidden ${subStatus === 1 ? 'bg-pink-50/30 dark:bg-pink-950/15' : ''}"
                                                  ondragstart="handleDragStart(event, 'subitem', ${subIdx}, ${itemIdx}, ${catIdx})"
                                                  ondragover="handleDragOver(event, 'subitem', ${subIdx}, ${itemIdx}, ${catIdx})"
                                                  ondragleave="handleDragLeave(event)"
                                                  ondrop="handleDrop(event, 'subitem', ${subIdx}, ${itemIdx}, ${catIdx})"
                                                  ondragend="handleDragEnd(event)">
                                                 <div class="grip-handle text-slate-100 dark:text-slate-800 opacity-0 group-hover/sub:opacity-100 flex-shrink-0 transition-opacity" onmousedown="enableDrag('${subId}', true)" onmouseup="enableDrag('${subId}', false)" onmouseleave="enableDrag('${subId}', false)"><i data-lucide="grip-vertical" class="w-3.5 h-3.5"></i></div>
-                                                <input type="checkbox" ${sub.checked ? 'checked' : ''} onchange="toggleSubItem(${catIdx}, ${itemIdx}, ${subIdx})" class="!w-4 !h-4 flex-shrink-0">
+                                                <button type="button" onclick="cycleSubItemStatus(${catIdx}, ${itemIdx}, ${subIdx})" class="${subBoxClass}" style="${subBoxStyle}" title="${statusTitles[subStatus]}" aria-label="${statusTitles[subStatus]}">
+                                                    ${subBoxContent}
+                                                </button>
 
-                                                <input id="${subInputId}" type="text" value="${escapeHtml(sub.text)}" onfocus="setTimeout(() => this.select(), 10)" oninput="updateSubItemText(${catIdx}, ${itemIdx}, ${subIdx}, this.value, false)" class="flex-grow text-sm border-none bg-transparent focus:ring-0 p-0 min-w-0 text-ellipsis dark:text-slate-400 ${sub.checked ? 'checked-item' : ''}">
+                                                <input id="${subInputId}" type="text" value="${escapeHtml(sub.text)}" onfocus="setTimeout(() => this.select(), 10)" oninput="updateSubItemText(${catIdx}, ${itemIdx}, ${subIdx}, this.value, false)" class="flex-grow text-sm border-none bg-transparent focus:ring-0 p-0 min-w-0 text-ellipsis transition-colors dark:text-slate-400 ${subTextClass}">
 
                                                 <div class="flex items-center bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-1 py-0.5 rounded-lg shadow-sm justify-between transition-colors mr-1 flex-shrink-0">
                                                     <button onclick="updateSubItemAmount(${catIdx}, ${itemIdx}, ${subIdx}, -1)" class="text-[10px] text-slate-400 font-bold px-1">-</button>
@@ -591,11 +657,35 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
         if(input) { input.focus(); input.select(); }
     }
 
-    function toggleSubItem(catIdx, itemIdx, subIdx) { const list = lists.find(l => l.id === activeListId); list.categories[catIdx].items[itemIdx].subItems[subIdx].checked = !list.categories[catIdx].items[itemIdx].subItems[subIdx].checked; renderEditor(); }
+    function cycleItemStatus(catIdx, itemIdx) {
+        const list = lists.find(l => l.id === activeListId);
+        if (!list) return;
+        const item = list.categories[catIdx].items[itemIdx];
+        const current = getItemStatus(item);
+        const next = (current + 1) % 3; // 0 -> 1 -> 2 -> 0
+        item.status = next;
+        item.checked = (next === 2);
+        save();
+        renderEditor();
+    }
+
+    function cycleSubItemStatus(catIdx, itemIdx, subIdx) {
+        const list = lists.find(l => l.id === activeListId);
+        if (!list) return;
+        const sub = list.categories[catIdx].items[itemIdx].subItems[subIdx];
+        const current = getItemStatus(sub);
+        const next = (current + 1) % 3; // 0 -> 1 -> 2 -> 0
+        sub.status = next;
+        sub.checked = (next === 2);
+        save();
+        renderEditor();
+    }
+
+    function toggleSubItem(catIdx, itemIdx, subIdx) { cycleSubItemStatus(catIdx, itemIdx, subIdx); }
     function updateSubItemText(catIdx, itemIdx, subIdx, val, render = true) { const list = lists.find(l => l.id === activeListId); list.categories[catIdx].items[itemIdx].subItems[subIdx].text = val; save(); if (render) renderEditor(); }
     function updateSubItemAmount(catIdx, itemIdx, subIdx, delta) { const list = lists.find(l => l.id === activeListId); const sub = list.categories[catIdx].items[itemIdx].subItems[subIdx]; sub.amount = Math.max(1, (sub.amount || 1) + delta); renderEditor(); }
     function deleteSubItem(catIdx, itemIdx, subIdx) { const list = lists.find(l => l.id === activeListId); list.categories[catIdx].items[itemIdx].subItems.splice(subIdx, 1); renderEditor(); }
-    function toggleItem(catIdx, itemIdx) { const list = lists.find(l => l.id === activeListId); list.categories[catIdx].items[itemIdx].checked = !list.categories[catIdx].items[itemIdx].checked; renderEditor(); }
+    function toggleItem(catIdx, itemIdx) { cycleItemStatus(catIdx, itemIdx); }
     function updateItemText(catIdx, itemIdx, val, render = true) { const list = lists.find(l => l.id === activeListId); list.categories[catIdx].items[itemIdx].text = val; save(); if (render) renderEditor(); }
     function updateItemAmount(catIdx, itemIdx, delta) { const list = lists.find(l => l.id === activeListId); const item = list.categories[catIdx].items[itemIdx]; item.amount = Math.max(1, (item.amount || 1) + delta); renderEditor(); }
     function deleteItem(catIdx, itemIdx) { const list = lists.find(l => l.id === activeListId); list.categories[catIdx].items.splice(itemIdx, 1); renderEditor(); }
@@ -719,11 +809,16 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
 
         // Progress
         const totalItems = list.categories.reduce((acc, cat) => acc + (cat.items || []).length, 0);
-        const checkedItems = list.categories.reduce((acc, cat) => acc + (cat.items || []).filter(i => i.checked).length, 0);
-        const progress = totalItems === 0 ? 0 : Math.round((checkedItems / totalItems) * 100);
+        const packedItems = list.categories.reduce((acc, cat) => acc + (cat.items || []).filter(i => getItemStatus(i) === 2).length, 0);
+        const readyItems = list.categories.reduce((acc, cat) => acc + (cat.items || []).filter(i => getItemStatus(i) === 1).length, 0);
+        const progress = totalItems === 0 ? 0 : Math.round((packedItems / totalItems) * 100);
         doc.setFontSize(9);
         doc.setTextColor(100, 116, 139);
-        doc.text(checkedItems + ' / ' + totalItems + ' erledigt (' + progress + '%)', margin, y + 4);
+        let progressText = `${packedItems} / ${totalItems} eingepackt (${progress}%)`;
+        if (readyItems > 0) {
+            progressText += `  •  ${readyItems} liegt bereit`;
+        }
+        doc.text(progressText, margin, y + 4);
         y += 10;
 
         // Separator
@@ -761,25 +856,47 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
             (cat.items || []).forEach(function(item) {
                 checkPage(10);
 
-                // Checkbox
+                // Checkbox (3 States: 0 = Offen, 1 = Liegt bereit, 2 = Eingepackt)
                 const boxX = margin + 4;
                 const boxSize = 3.5;
-                doc.setDrawColor(203, 213, 225);
-                doc.setLineWidth(0.4);
-                doc.rect(boxX, y, boxSize, boxSize);
-                if (item.checked) {
+                const status = getItemStatus(item);
+
+                if (status === 2) {
+                    // Eingepackt
                     doc.setFillColor(themeColor[0], themeColor[1], themeColor[2]);
                     doc.rect(boxX, y, boxSize, boxSize, 'F');
                     doc.setDrawColor(255, 255, 255);
                     doc.setLineWidth(0.6);
                     doc.line(boxX + 0.7, y + 1.8, boxX + 1.4, y + 2.7);
                     doc.line(boxX + 1.4, y + 2.7, boxX + 2.8, y + 0.8);
+                } else if (status === 1) {
+                    // Liegt bereit (Hellpink)
+                    doc.setFillColor(252, 231, 243);
+                    doc.rect(boxX, y, boxSize, boxSize, 'F');
+                    doc.setDrawColor(236, 72, 153);
+                    doc.setLineWidth(0.4);
+                    doc.rect(boxX, y, boxSize, boxSize);
+                    doc.setFillColor(236, 72, 153);
+                    doc.rect(boxX + 1, y + 1, 1.5, 1.5, 'F');
+                } else {
+                    // Offen
+                    doc.setDrawColor(203, 213, 225);
+                    doc.setLineWidth(0.4);
+                    doc.rect(boxX, y, boxSize, boxSize);
                 }
 
                 // Item text
                 doc.setFontSize(10);
-                doc.setFont('helvetica', item.checked ? 'normal' : 'bold');
-                doc.setTextColor(item.checked ? 148 : 51, item.checked ? 163 : 65, item.checked ? 184 : 85);
+                if (status === 2) {
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(148, 163, 184);
+                } else if (status === 1) {
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(219, 39, 119); // Pink
+                } else {
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(51, 65, 85);
+                }
                 const itemCleanText = sanitizeForPdf(item.text);
                 const itemText = itemCleanText + (item.amount > 1 ? '  x' + item.amount : '');
                 doc.text(itemText, margin + 12, y + 3);
@@ -790,21 +907,37 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
                     item.subItems.forEach(function(sub) {
                         checkPage(7);
 
-                        // Sub checkbox
                         const subBoxX = margin + 14;
                         const subBoxSize = 2.8;
-                        doc.setDrawColor(203, 213, 225);
-                        doc.setLineWidth(0.3);
-                        doc.rect(subBoxX, y, subBoxSize, subBoxSize);
-                        if (sub.checked) {
+                        const subStatus = getItemStatus(sub);
+
+                        if (subStatus === 2) {
                             doc.setFillColor(themeColor[0], themeColor[1], themeColor[2]);
                             doc.rect(subBoxX, y, subBoxSize, subBoxSize, 'F');
+                        } else if (subStatus === 1) {
+                            doc.setFillColor(252, 231, 243);
+                            doc.rect(subBoxX, y, subBoxSize, subBoxSize, 'F');
+                            doc.setDrawColor(236, 72, 153);
+                            doc.setLineWidth(0.3);
+                            doc.rect(subBoxX, y, subBoxSize, subBoxSize);
+                            doc.setFillColor(236, 72, 153);
+                            doc.rect(subBoxX + 0.8, y + 0.8, 1.2, 1.2, 'F');
+                        } else {
+                            doc.setDrawColor(203, 213, 225);
+                            doc.setLineWidth(0.3);
+                            doc.rect(subBoxX, y, subBoxSize, subBoxSize);
                         }
 
                         // Sub text
                         doc.setFontSize(9);
                         doc.setFont('helvetica', 'normal');
-                        doc.setTextColor(sub.checked ? 148 : 100, sub.checked ? 163 : 116, sub.checked ? 184 : 139);
+                        if (subStatus === 2) {
+                            doc.setTextColor(148, 163, 184);
+                        } else if (subStatus === 1) {
+                            doc.setTextColor(219, 39, 119);
+                        } else {
+                            doc.setTextColor(100, 116, 139);
+                        }
                         const subCleanText = sanitizeForPdf(sub.text);
                         const subText = subCleanText + (sub.amount > 1 ? '  x' + sub.amount : '');
                         doc.text(subText, margin + 20, y + 2.5);

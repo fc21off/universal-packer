@@ -15,6 +15,107 @@ body {
     opacity: 0.5;
 }
 
+.ready-item {
+    color: #db2777 !important;
+}
+
+.dark .ready-item {
+    color: #f472b6 !important;
+}
+
+/* --- 3-State Packer Box (Leer -> Liegt bereit -> Eingepackt) --- */
+.packer-box {
+    width: 1.4rem;
+    height: 1.4rem;
+    border-radius: 6px;
+    border: 2px solid #cbd5e1;
+    background-color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+    padding: 0;
+    user-select: none;
+    outline: none;
+}
+
+.dark .packer-box {
+    background-color: #1e293b;
+    border-color: #475569;
+}
+
+.packer-box:hover {
+    transform: scale(1.1);
+}
+
+.packer-box:focus-visible {
+    box-shadow: 0 0 0 2px #4f46e5;
+}
+
+/* State 0: Empty */
+.packer-box.state-empty:hover {
+    border-color: #f472b6;
+}
+
+/* State 1: Liegt bereit (Hellpink) */
+.packer-box.state-ready {
+    background-color: #fce7f3;
+    border-color: #ec4899;
+    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.2);
+}
+
+.dark .packer-box.state-ready {
+    background-color: rgba(131, 24, 67, 0.4);
+    border-color: #f472b6;
+    box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.25);
+}
+
+.packer-box.state-ready .box-indicator {
+    width: 0.65rem;
+    height: 0.65rem;
+    background-color: #ec4899;
+    border-radius: 3px;
+    animation: popIn 0.15s ease-out;
+}
+
+.dark .packer-box.state-ready .box-indicator {
+    background-color: #f472b6;
+}
+
+/* State 2: Eingepackt */
+.packer-box.state-packed {
+    background-color: #4f46e5;
+    border-color: #4f46e5;
+}
+
+.packer-box.state-packed .box-indicator {
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: popIn 0.15s ease-out;
+}
+
+@keyframes popIn {
+    0% { transform: scale(0.3); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* Sub-item smaller box */
+.packer-box.sub-box {
+    width: 1.15rem;
+    height: 1.15rem;
+    border-radius: 4px;
+}
+
+.packer-box.sub-box.state-ready .box-indicator {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 2px;
+}
+
 .glass {
     background: rgba(255, 255, 255, 0.8);
     backdrop-filter: blur(10px);

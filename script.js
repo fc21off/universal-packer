@@ -18,13 +18,13 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
         lucide.createIcons();
     }
 
-    const TRAVEL_EMOJIS = ['ðŸ“', 'ðŸ‘•', 'ðŸ”‹', 'ðŸª¥', 'ðŸ“·', 'ðŸ›‚', 'ðŸŽŸï¸', 'ðŸ’Š', 'ðŸŽ’', 'ðŸ¥¾', 'ðŸŒ‚', 'â›º', 'ðŸ”¦', 'ðŸ—ºï¸', 'ðŸ•¶ï¸', 'ðŸ’»', 'ðŸŽ§', 'ðŸ”Œ', 'âš¡', 'ðŸ’µ', 'ðŸ’³', 'ðŸ“¸', 'ðŸ“¦', 'ðŸš†', 'ðŸš¿'];
+    const TRAVEL_EMOJIS = ['📁', '👕', '🔋', '🪥', '📷', '🛂', '🎟️', '💊', '🎒', '🥾', '🌂', '⛺', '🔦', '🗺️', '🕶️', '💻', '🎧', '🔌', '⚡', '💵', '💳', '📸', '📦', '🚆', '🚿'];
 
     // Initial Presets basierend auf deinen echten Schottland-Daten
     if(categoryPresets.length === 0) {
         categoryPresets = [
             {
-                name: "Kameragear Pro", emoji: "ðŸ“¸",
+                name: "Kameragear Pro", emoji: "📸",
                 items: [
                     { text: "Kamerabody", amount: 1, checked: false, subItems: [] },
                     { text: "Objektive", amount: 1, checked: false, subItems: [{text: "Standard", amount: 1, checked: false}] },
@@ -36,14 +36,14 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
                 ]
             },
             {
-                name: "Basis Dokumente", emoji: "ðŸ’³",
+                name: "Basis Dokumente", emoji: "💳",
                 items: [
                     { text: "Reisepass", amount: 1, checked: false },
                     {
                         text: "Geldbeutel", amount: 1, checked: false,
                         subItems: [
                             {text: "Ausweis", amount: 1},
-                            {text: "FÃ¼hrerschein", amount: 1},
+                            {text: "Führerschein", amount: 1},
                             {text: "Versicherungskarte", amount: 1},
                             {text: "PolyGo Karte", amount: 1},
                             {text: "Studentenausweis", amount: 1},
@@ -58,14 +58,14 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
 
     const BASE_CATEGORIES = [
         {
-            name: "Dokumente", emoji: "ðŸ’³", collapsed: false,
+            name: "Dokumente", emoji: "💳", collapsed: false,
             items: [
                 { text: "Reisepass", amount: 1, checked: false },
                 {
                     text: "Geldbeutel", amount: 1, checked: false,
                     subItems: [
                         { text: "Ausweis", amount: 1, checked: false },
-                        { text: "FÃ¼hrerschein", amount: 1, checked: false },
+                        { text: "Führerschein", amount: 1, checked: false },
                         { text: "PolyGo Karte", amount: 1 },
                         { text: "Studentenausweis", amount: 1 },
                         { text: "Bargeld", amount: 1, checked: false }
@@ -74,10 +74,10 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
             ]
         },
         {
-            name: "Kleidung", emoji: "ðŸ‘•", collapsed: false,
+            name: "Kleidung", emoji: "👕", collapsed: false,
             items: [
                 { text: "T-Shirts", amount: 5, checked: false },
-                { text: "UnterwÃ¤sche", amount: 5, checked: false },
+                { text: "Unterwäsche", amount: 5, checked: false },
                 { text: "Socken", amount: 5, checked: false },
                 { text: "Pullis", amount: 2 },
                 { text: "Jacke", amount: 1 }
@@ -86,26 +86,26 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
     ];
 
     const TEMPLATES = {
-        city: { name: "StÃ¤dtetrip", icon: "building-2", color: "#4f46e5", categories: JSON.parse(JSON.stringify(BASE_CATEGORIES)) },
+        city: { name: "Städtetrip", icon: "building-2", color: "#4f46e5", categories: JSON.parse(JSON.stringify(BASE_CATEGORIES)) },
         outdoor: { name: "Outdoor", icon: "mountain", color: "#078537", categories: JSON.parse(JSON.stringify(BASE_CATEGORIES)) },
         photography: {
             name: "Foto Tour", icon: "camera", color: "#d97706",
             categories: [...JSON.parse(JSON.stringify(BASE_CATEGORIES)), JSON.parse(JSON.stringify(categoryPresets[0]))]
         },
-        empty: { name: "Neue Reise", icon: "briefcase", color: "#64748b", categories: [{ name: "Allgemein", emoji: "ðŸ“¦", collapsed: false, items: [] }] }
+        empty: { name: "Neue Reise", icon: "briefcase", color: "#64748b", categories: [{ name: "Allgemein", emoji: "📦", collapsed: false, items: [] }] }
     };
 
     function renderDashboard() {
         const dashboard = document.getElementById('dashboard');
         dashboard.innerHTML = '';
         if (lists.length === 0) {
-            dashboard.innerHTML = `<div class="col-span-full py-24 text-center bg-white dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800 transition-colors duration-300"><h3 class="text-2xl font-bold dark:text-white">Wohin geht's als nÃ¤chstes?</h3></div>`;
+            dashboard.innerHTML = `<div class="col-span-full py-24 text-center bg-white dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800 transition-colors duration-300"><h3 class="text-2xl font-bold dark:text-white">Wohin geht's als nächstes?</h3></div>`;
         } else {
             lists.forEach(list => {
                 const total = list.categories.reduce((acc, cat) => acc + (cat.items || []).length, 0);
                 const checked = list.categories.reduce((acc, cat) => acc + (cat.items || []).filter(i => i.checked).length, 0);
                 const progress = total === 0 ? 0 : Math.round((checked / total) * 100);
-                const dateDisplay = (list.startDate || list.endDate) ? `${formatDate(list.startDate) || '?'} â€” ${formatDate(list.endDate) || '?'}` : "Zeitraum planen";
+                const dateDisplay = (list.startDate || list.endDate) ? `${formatDate(list.startDate) || '?'} — ${formatDate(list.endDate) || '?'}` : "Zeitraum planen";
 
                 const card = document.createElement('div');
                 card.className = `list-card bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm cursor-pointer relative overflow-hidden group transition-all duration-300`;
@@ -173,7 +173,7 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
             dateSectionHTML = `
                 <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl border border-indigo-200 dark:border-indigo-800 shadow-inner animate-in fade-in zoom-in-95 duration-200">
                     <input type="date" value="${list.startDate || ''}" onchange="updateListMeta('startDate', this.value, true)" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-semibold rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white cursor-pointer">
-                    <span class="text-slate-400 font-bold">â€”</span>
+                    <span class="text-slate-400 font-bold">—</span>
                     <input type="date" value="${list.endDate || ''}" onchange="updateListMeta('endDate', this.value, true)" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-semibold rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-500 outline-none dark:text-white cursor-pointer">
                     <button onclick="setDateEditMode(false)" class="bg-indigo-600 hover:bg-indigo-700 text-white p-1.5 rounded-lg transition-colors shadow-sm ml-1" title="Speichern">
                         <i data-lucide="check" class="w-4 h-4"></i>
@@ -185,7 +185,7 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
                 <button onclick="setDateEditMode(true)" class="group flex items-center gap-2.5 bg-slate-50 hover:bg-indigo-50 dark:bg-slate-800 dark:hover:bg-slate-700/80 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 transition-all shadow-sm hover:border-indigo-300 dark:hover:border-indigo-600 animate-in fade-in duration-200">
                     <i data-lucide="calendar" class="w-4 h-4 text-indigo-500 dark:text-indigo-400 group-hover:scale-110 transition-transform"></i>
                     <span class="text-sm font-bold text-slate-700 dark:text-slate-200">
-                        ${dateHasValues ? `${startDisplay} <span class="text-slate-400 font-normal mx-1">â€”</span> ${endDisplay}` : 'Reisezeitraum festlegen...'}
+                        ${dateHasValues ? `${startDisplay} <span class="text-slate-400 font-normal mx-1">—</span> ${endDisplay}` : 'Reisezeitraum festlegen...'}
                     </span>
                     <i data-lucide="edit-2" class="w-3.5 h-3.5 text-slate-300 dark:text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity"></i>
                 </button>
@@ -276,7 +276,7 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
                 <div class="px-5 md:px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 transition-colors">
                     <div class="flex items-center gap-2 flex-grow min-w-0">
                         <div class="grip-handle text-slate-300 dark:text-slate-600 px-1 flex-shrink-0" onmousedown="enableDrag('${catId}', true)" onmouseup="enableDrag('${catId}', false)" onmouseleave="enableDrag('${catId}', false)"><i data-lucide="grip-vertical" class="w-5 h-5"></i></div>
-                        <button onclick="openEmojiPicker('category', ${catIdx})" class="text-2xl p-1 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-colors flex-shrink-0">${cat.emoji || 'ðŸ“¦'}</button>
+                        <button onclick="openEmojiPicker('category', ${catIdx})" class="text-2xl p-1 hover:bg-white dark:hover:bg-slate-700 rounded-lg transition-colors flex-shrink-0">${cat.emoji || '📦'}</button>
                         <input id="cat-input-${catIdx}" type="text" value="${escapeHtml(cat.name)}" onfocus="setTimeout(() => this.select(), 10)" oninput="updateCategoryName(${catIdx}, this.value, false)" class="font-bold border-none bg-transparent focus:ring-0 p-0 text-lg w-full min-w-0 dark:text-white text-ellipsis">
                     </div>
                     <div class="flex items-center gap-1 flex-shrink-0 ml-2">
@@ -338,7 +338,7 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
                             </div>`;
             }).join('')}
                     </div>
-                    <button onclick="addItem(${catIdx})" class="w-full py-3 rounded-xl text-sm font-bold text-slate-400 dark:text-slate-600 border-2 border-dashed border-slate-100 dark:border-slate-800 hover:text-indigo-500 transition-all flex items-center justify-center gap-2"><i data-lucide="plus-circle" class="w-4 h-4"></i> Item hinzufÃ¼gen</button>
+                    <button onclick="addItem(${catIdx})" class="w-full py-3 rounded-xl text-sm font-bold text-slate-400 dark:text-slate-600 border-2 border-dashed border-slate-100 dark:border-slate-800 hover:text-indigo-500 transition-all flex items-center justify-center gap-2"><i data-lucide="plus-circle" class="w-4 h-4"></i> Item hinzufügen</button>
                 </div>`;
             container.appendChild(catEl);
         });
@@ -361,7 +361,7 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
             el.className = "bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 flex justify-between items-center group";
             el.innerHTML = `
                 <div class="flex items-center gap-3 min-w-0">
-                    <button onclick="openEmojiPicker('preset', ${idx})" class="text-2xl">${preset.emoji || 'ðŸ“¦'}</button>
+                    <button onclick="openEmojiPicker('preset', ${idx})" class="text-2xl">${preset.emoji || '📦'}</button>
                     <div class="min-w-0">
                         <input type="text" value="${preset.name}" oninput="updatePresetName(${idx}, this.value)" class="font-bold bg-transparent border-none p-0 focus:ring-0 dark:text-white w-full">
                         <p class="text-xs text-slate-400">${preset.items.length} Items im Standard</p>
@@ -413,8 +413,8 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
     function addItemToPreset() { categoryPresets[currentEditPresetIdx].items.push({text: "Neuer Eintrag", amount: 1, checked: false, subItems: []}); renderEditPresetItems(); save(); }
 
     function updatePresetName(idx, val) { categoryPresets[idx].name = val; save(); }
-    function deletePreset(idx) { if(confirm("Diesen Blueprint wirklich lÃ¶schen?")) { categoryPresets.splice(idx, 1); renderPresetList(); save(); } }
-    function createNewPreset() { categoryPresets.push({ name: "Neuer Blueprint", emoji: "ðŸ“¦", items: [] }); renderPresetList(); save(); }
+    function deletePreset(idx) { if(confirm("Diesen Blueprint wirklich löschen?")) { categoryPresets.splice(idx, 1); renderPresetList(); save(); } }
+    function createNewPreset() { categoryPresets.push({ name: "Neuer Blueprint", emoji: "📦", items: [] }); renderPresetList(); save(); }
 
     function saveCategoryAsPreset(catIdx) {
         const list = lists.find(l => l.id === activeListId);
@@ -436,7 +436,7 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
             const btn = document.createElement('button');
             btn.className = "p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl hover:border-indigo-500 text-left transition-all flex items-center gap-4 group";
             btn.onclick = () => { addPresetToTrip(idx); closeModal('addPresetModal'); };
-            btn.innerHTML = `<span class="text-3xl group-hover:scale-110 transition-transform">${preset.emoji}</span><div><h4 class="font-bold dark:text-white">${preset.name}</h4><p class="text-xs text-slate-400">${preset.items.length} GegenstÃ¤nde</p></div>`;
+            btn.innerHTML = `<span class="text-3xl group-hover:scale-110 transition-transform">${preset.emoji}</span><div><h4 class="font-bold dark:text-white">${preset.name}</h4><p class="text-xs text-slate-400">${preset.items.length} Gegenstände</p></div>`;
             grid.appendChild(btn);
         });
         document.getElementById('addPresetModal').classList.replace('hidden', 'flex');
@@ -555,13 +555,13 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
         if (list) { list[field] = value; save(); if (render) renderEditor(); }
     }
 
-    function deleteList(id) { if (confirm("Reise wirklich lÃ¶schen?")) { lists = lists.filter(l => l.id !== id); renderDashboard(); } }
+    function deleteList(id) { if (confirm("Reise wirklich löschen?")) { lists = lists.filter(l => l.id !== id); renderDashboard(); } }
     function setLayoutMode(mode) { editorLayout = mode; localStorage.setItem('universal_packer_layout', editorLayout); renderEditor(); }
     function toggleCollapse(catIdx) { const list = lists.find(l => l.id === activeListId); if (list) { list.categories[catIdx].collapsed = !list.categories[catIdx].collapsed; save(); renderEditor(); } }
 
     function addNewCategory() {
         const list = lists.find(l => l.id === activeListId);
-        list.categories.push({name: "Neue Kategorie", emoji: "ðŸ“¦", items: [], collapsed: false});
+        list.categories.push({name: "Neue Kategorie", emoji: "📦", items: [], collapsed: false});
         const newIdx = list.categories.length - 1;
         renderEditor();
         const input = document.getElementById(`cat-input-${newIdx}`);
@@ -672,7 +672,7 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
             doc.setFontSize(10);
             doc.setTextColor(100, 116, 139);
             doc.setFont('helvetica', 'normal');
-            doc.text(`${startDisplay || '?'}  —  ${endDisplay || '?'}`, margin, y + 4);
+            doc.text((startDisplay || '?') + '  \u2014  ' + (endDisplay || '?'), margin, y + 4);
             y += 10;
         }
 
@@ -682,7 +682,7 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
         const progress = totalItems === 0 ? 0 : Math.round((checkedItems / totalItems) * 100);
         doc.setFontSize(9);
         doc.setTextColor(100, 116, 139);
-        doc.text(`${checkedItems} / ${totalItems} erledigt (${progress}%)`, margin, y + 4);
+        doc.text(checkedItems + ' / ' + totalItems + ' erledigt (' + progress + '%)', margin, y + 4);
         y += 10;
 
         // Separator
@@ -692,7 +692,7 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
         y += 8;
 
         // Categories
-        list.categories.forEach((cat) => {
+        list.categories.forEach(function(cat) {
             checkPage(20);
 
             // Category header
@@ -701,11 +701,11 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
             doc.setFontSize(13);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(30, 41, 59);
-            doc.text(`${cat.emoji || '📦'}  ${cat.name}`, margin + 4, y + 7);
+            doc.text((cat.emoji || '') + '  ' + cat.name, margin + 4, y + 7);
             y += 14;
 
             // Items
-            (cat.items || []).forEach((item) => {
+            (cat.items || []).forEach(function(item) {
                 checkPage(10);
 
                 // Checkbox
@@ -727,13 +727,13 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
                 doc.setFontSize(10);
                 doc.setFont('helvetica', item.checked ? 'normal' : 'bold');
                 doc.setTextColor(item.checked ? 148 : 51, item.checked ? 163 : 65, item.checked ? 184 : 85);
-                const itemText = item.text + (item.amount > 1 ? `  ×${item.amount}` : '');
+                const itemText = item.text + (item.amount > 1 ? '  x' + item.amount : '');
                 doc.text(itemText, margin + 12, y + 3);
                 y += 7;
 
                 // Sub-items
                 if (item.subItems && item.subItems.length > 0) {
-                    item.subItems.forEach((sub) => {
+                    item.subItems.forEach(function(sub) {
                         checkPage(7);
 
                         // Sub checkbox
@@ -751,7 +751,7 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
                         doc.setFontSize(9);
                         doc.setFont('helvetica', 'normal');
                         doc.setTextColor(sub.checked ? 148 : 100, sub.checked ? 163 : 116, sub.checked ? 184 : 139);
-                        const subText = sub.text + (sub.amount > 1 ? `  ×${sub.amount}` : '');
+                        const subText = sub.text + (sub.amount > 1 ? '  x' + sub.amount : '');
                         doc.text(subText, margin + 20, y + 2.5);
                         y += 5.5;
                     });
@@ -770,9 +770,9 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
         doc.setFontSize(7);
         doc.setTextColor(148, 163, 184);
         doc.setFont('helvetica', 'italic');
-        doc.text(`Universal Packer — erstellt am ${new Date().toLocaleDateString('de-DE')}`, margin, y + 2);
+        doc.text('Universal Packer \u2014 erstellt am ' + new Date().toLocaleDateString('de-DE'), margin, y + 2);
 
-        doc.save(`${list.name}.pdf`);
+        doc.save(list.name + '.pdf');
     }
 
     function openTemplateModal() { document.getElementById('templateModal').classList.replace('hidden', 'flex'); lucide.createIcons(); }

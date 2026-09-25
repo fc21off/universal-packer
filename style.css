@@ -1,0 +1,203 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.list-card:hover {
+    transform: translateY(-4px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.checked-item {
+    text-decoration: line-through;
+    opacity: 0.5;
+}
+
+.glass {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark .glass {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Eckige Checkboxen */
+input[type="checkbox"] {
+    appearance: none;
+    background-color: #fff;
+    margin: 0;
+    color: #4f46e5;
+    width: 1.4rem;
+    height: 1.4rem;
+    border: 2px solid #cbd5e1;
+    border-radius: 4px;
+    display: grid;
+    place-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.dark input[type="checkbox"] {
+    background-color: #1e293b;
+    border-color: #475569;
+}
+
+input[type="checkbox"]::before {
+    content: "";
+    width: 0.8rem;
+    height: 0.8rem;
+    transform: scale(0);
+    transition: 120ms transform ease-in-out;
+    box-shadow: inset 1em 1em white;
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+input[type="checkbox"]:checked {
+    background-color: #4f46e5;
+    border-color: #4f46e5;
+}
+
+input[type="checkbox"]:checked::before {
+    transform: scale(1);
+}
+
+.dragging {
+    opacity: 0.4;
+    background-color: #f1f5f9 !important;
+    border-radius: 12px;
+}
+
+.dark .dragging {
+    background-color: #1e293b !important;
+}
+
+.drag-over-top {
+    box-shadow: 0 -3px 0 0 #4f46e5 !important;
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+}
+
+.drag-over-bottom {
+    box-shadow: 0 3px 0 0 #4f46e5 !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
+/* --- Color Picker Styling --- */
+.color-swatch {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.dark .color-swatch {
+    border-color: #1e293b;
+}
+
+.color-swatch:hover {
+    transform: scale(1.1);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
+
+.color-dot {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.color-dot:hover {
+    transform: scale(1.15);
+}
+
+.color-dot.active {
+    border-color: #4f46e5;
+    background-clip: content-box;
+    padding: 2px;
+}
+
+.color-dropdown {
+    animation: fadeInScale 0.2s ease-out;
+    transform-origin: top left;
+}
+
+@keyframes fadeInScale {
+    from { opacity: 0; transform: scale(0.95) translateY(-10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.custom-color-input-wrapper {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid #e2e8f0;
+}
+
+.dark .custom-color-input-wrapper {
+    border-color: #334155;
+}
+
+input[type="color"].hidden-picker {
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+}
+
+.grip-handle {
+    cursor: grab;
+    user-select: none;
+    opacity: 0.3;
+    transition: opacity 0.2s;
+    padding: 4px;
+}
+
+.grip-handle:hover {
+    opacity: 1;
+}
+
+.grip-handle:active {
+    cursor: grabbing;
+}
+
+.category-card {
+    break-inside: avoid-column;
+    margin-bottom: 1.5rem;
+    display: inline-block;
+    width: 100%;
+}

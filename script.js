@@ -640,6 +640,37 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
         }
     }
 
+    const emojiCache = {};
+    function getEmojiImage(emoji) {
+        if (!emoji) return null;
+        if (emojiCache[emoji]) return emojiCache[emoji];
+        try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 72;
+            canvas.height = 72;
+            const ctx = canvas.getContext('2d');
+            ctx.font = '50px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(emoji, 36, 38);
+            const dataUrl = canvas.toDataURL('image/png');
+            emojiCache[emoji] = dataUrl;
+            return dataUrl;
+        } catch (e) {
+            console.warn('Emoji render failed', e);
+            return null;
+        }
+    }
+
+    function sanitizeForPdf(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/\p{Extended_Pictographic}/gu, '')
+            .replace(/[\uD800-\uDFFF]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
     function exportPDF(list) {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF({ unit: 'mm', format: 'a4' });
@@ -656,13 +687,23 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
             }
         }
 
+        function hexToRgb(hex) {
+            if (!hex) return [79, 70, 229];
+            hex = hex.replace('#', '');
+            if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+            const num = parseInt(hex, 16);
+            if (isNaN(num)) return [79, 70, 229];
+            return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+        }
+        const themeColor = hexToRgb(list.color);
+
         // Header
-        doc.setFillColor(79, 70, 229);
+        doc.setFillColor(themeColor[0], themeColor[1], themeColor[2]);
         doc.roundedRect(margin, y, contentWidth, 18, 3, 3, 'F');
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(18);
         doc.setFont('helvetica', 'bold');
-        doc.text(list.name, margin + 8, y + 12);
+        doc.text(sanitizeForPdf(list.name), margin + 8, y + 12);
         y += 22;
 
         // Date line
@@ -698,10 +739,22 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
             // Category header
             doc.setFillColor(241, 245, 249);
             doc.roundedRect(margin, y, contentWidth, 10, 2, 2, 'F');
+
+            let textStartX = margin + 4;
+            const emojiImg = getEmojiImage(cat.emoji);
+            if (emojiImg) {
+                try {
+                    doc.addImage(emojiImg, 'PNG', margin + 3.5, y + 2, 6, 6);
+                    textStartX = margin + 12;
+                } catch(e) {
+                    console.warn('Emoji render error:', e);
+                }
+            }
+
             doc.setFontSize(13);
             doc.setFont('helvetica', 'bold');
             doc.setTextColor(30, 41, 59);
-            doc.text((cat.emoji || '') + '  ' + cat.name, margin + 4, y + 7);
+            doc.text(sanitizeForPdf(cat.name), textStartX, y + 7);
             y += 14;
 
             // Items
@@ -715,7 +768,7 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
                 doc.setLineWidth(0.4);
                 doc.rect(boxX, y, boxSize, boxSize);
                 if (item.checked) {
-                    doc.setFillColor(79, 70, 229);
+                    doc.setFillColor(themeColor[0], themeColor[1], themeColor[2]);
                     doc.rect(boxX, y, boxSize, boxSize, 'F');
                     doc.setDrawColor(255, 255, 255);
                     doc.setLineWidth(0.6);
@@ -727,7 +780,8 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
                 doc.setFontSize(10);
                 doc.setFont('helvetica', item.checked ? 'normal' : 'bold');
                 doc.setTextColor(item.checked ? 148 : 51, item.checked ? 163 : 65, item.checked ? 184 : 85);
-                const itemText = item.text + (item.amount > 1 ? '  x' + item.amount : '');
+                const itemCleanText = sanitizeForPdf(item.text);
+                const itemText = itemCleanText + (item.amount > 1 ? '  x' + item.amount : '');
                 doc.text(itemText, margin + 12, y + 3);
                 y += 7;
 
@@ -743,7 +797,7 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
                         doc.setLineWidth(0.3);
                         doc.rect(subBoxX, y, subBoxSize, subBoxSize);
                         if (sub.checked) {
-                            doc.setFillColor(79, 70, 229);
+                            doc.setFillColor(themeColor[0], themeColor[1], themeColor[2]);
                             doc.rect(subBoxX, y, subBoxSize, subBoxSize, 'F');
                         }
 
@@ -751,7 +805,8 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
                         doc.setFontSize(9);
                         doc.setFont('helvetica', 'normal');
                         doc.setTextColor(sub.checked ? 148 : 100, sub.checked ? 163 : 116, sub.checked ? 184 : 139);
-                        const subText = sub.text + (sub.amount > 1 ? '  x' + sub.amount : '');
+                        const subCleanText = sanitizeForPdf(sub.text);
+                        const subText = subCleanText + (sub.amount > 1 ? '  x' + sub.amount : '');
                         doc.text(subText, margin + 20, y + 2.5);
                         y += 5.5;
                     });

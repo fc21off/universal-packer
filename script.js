@@ -117,8 +117,7 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
                 const total = list.categories.reduce((acc, cat) => acc + (cat.items || []).length, 0);
                 const packed = list.categories.reduce((acc, cat) => acc + (cat.items || []).filter(i => getItemStatus(i) === 2).length, 0);
                 const ready = list.categories.reduce((acc, cat) => acc + (cat.items || []).filter(i => getItemStatus(i) === 1).length, 0);
-                const packedProgress = total === 0 ? 0 : Math.round((packed / total) * 100);
-                const readyProgress = total === 0 ? 0 : Math.round((ready / total) * 100);
+                const progress = total === 0 ? 0 : Math.round((packed / total) * 100);
                 const dateDisplay = (list.startDate || list.endDate) ? `${formatDate(list.startDate) || '?'} — ${formatDate(list.endDate) || '?'}` : "Zeitraum planen";
 
                 const card = document.createElement('div');
@@ -131,14 +130,14 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
                         <button onclick="event.stopPropagation(); deleteList('${list.id}')" class="p-2 text-slate-300 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
                     <h3 class="font-bold text-xl mb-1 dark:text-white overflow-hidden text-ellipsis whitespace-nowrap">${list.name}</h3>
-                    <p class="text-sm text-slate-400 dark:text-slate-500 mb-4 flex items-center gap-2"><i data-lucide="calendar" class="w-4 h-4"></i> ${dateDisplay}</p>
+                    <p class="text-sm text-slate-400 dark:text-slate-500 mb-5 flex items-center gap-2"><i data-lucide="calendar" class="w-4 h-4"></i> ${dateDisplay}</p>
+                    
                     <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">
-                        <span>${packed}/${total} eingepackt</span>
+                        <span>${packed} / ${total} eingepackt (${progress}%)</span>
                         ${ready > 0 ? `<span class="text-pink-500 font-bold flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-pink-400"></span>${ready} bereit</span>` : ''}
                     </div>
-                    <div class="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden flex">
-                        <div class="h-full transition-all duration-500" style="width: ${packedProgress}%; background-color: ${list.color}"></div>
-                        <div class="h-full transition-all duration-500 bg-pink-400 dark:bg-pink-500" style="width: ${readyProgress}%"></div>
+                    <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                        <div class="h-full transition-all duration-700 rounded-full" style="width: ${progress}%; background-color: ${list.color}"></div>
                     </div>`;
                 dashboard.appendChild(card);
             });
@@ -211,6 +210,11 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
             `;
         }
 
+        const totalItems = list.categories.reduce((acc, cat) => acc + (cat.items || []).length, 0);
+        const packedItems = list.categories.reduce((acc, cat) => acc + (cat.items || []).filter(i => getItemStatus(i) === 2).length, 0);
+        const readyItems = list.categories.reduce((acc, cat) => acc + (cat.items || []).filter(i => getItemStatus(i) === 1).length, 0);
+        const progressPercent = totalItems === 0 ? 0 : Math.round((packedItems / totalItems) * 100);
+
         const header = document.getElementById('listDetailHeader');
         header.innerHTML = `
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
@@ -223,13 +227,6 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
                     <div class="flex flex-wrap items-center gap-3">
                          ${dateSectionHTML}
                          <div class="h-8 w-px bg-slate-200 dark:bg-slate-700 mx-1 hidden sm:block"></div>
-
-                         <!-- Live Packing Stats Badge -->
-                         <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 shadow-sm">
-                             <span class="inline-block w-2.5 h-2.5 rounded-full" style="background-color: ${list.color || '#4f46e5'}"></span>
-                             <span>${list.categories.reduce((acc, cat) => acc + (cat.items || []).filter(i => getItemStatus(i) === 2).length, 0)}/${list.categories.reduce((acc, cat) => acc + (cat.items || []).length, 0)} eingepackt</span>
-                             ${list.categories.reduce((acc, cat) => acc + (cat.items || []).filter(i => getItemStatus(i) === 1).length, 0) > 0 ? `<span class="text-slate-300 dark:text-slate-600">|</span><span class="text-pink-500 font-bold flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-full bg-pink-400"></span>${list.categories.reduce((acc, cat) => acc + (cat.items || []).filter(i => getItemStatus(i) === 1).length, 0)} bereit</span>` : ''}
-                         </div>
 
                          <!-- Sexy Polished Color Picker -->
                          <div class="flex items-center gap-3 relative">
@@ -273,6 +270,17 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
                 <button onclick="exportList('${list.id}', 'json')" class="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold flex items-center gap-2 transition hover:bg-indigo-700 shadow-md shadow-indigo-500/20"><i data-lucide="download" class="w-4 h-4"></i> JSON</button>
                 <button onclick="exportList('${list.id}', 'pdf')" class="bg-rose-600 text-white px-6 py-2 rounded-xl font-bold flex items-center gap-2 transition hover:bg-rose-700 shadow-md shadow-rose-500/20"><i data-lucide="file-text" class="w-4 h-4"></i> PDF</button>
             </div>
+        </div>
+
+        <!-- Progress Bar im Editor -->
+        <div class="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800">
+            <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">
+                <span id="editorStatsText">${packedItems} von ${totalItems} Dingen eingepackt (${progressPercent}%)</span>
+                <span id="editorReadyText" class="${readyItems > 0 ? 'text-pink-500 font-bold flex items-center gap-1.5' : 'hidden'}">${readyItems > 0 ? `<span class="w-2 h-2 rounded-full bg-pink-400"></span>${readyItems} bereit` : ''}</span>
+            </div>
+            <div class="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                <div id="editorProgressBar" class="h-full transition-all duration-300 rounded-full" style="width: ${progressPercent}%; background-color: ${list.color || '#4f46e5'}"></div>
+            </div>
         </div>`;
 
         const container = document.getElementById('categoryContainer');
@@ -315,31 +323,29 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
                     <div id="items-${catIdx}" class="space-y-2">
                         ${cat.items.map((item, itemIdx) => {
                 const itemId = `item-row-${catIdx}-${itemIdx}`;
+                const itemInnerId = `item-inner-${catIdx}-${itemIdx}`;
+                const itemBoxId = `item-box-${catIdx}-${itemIdx}`;
                 const itemInputId = `input-${catIdx}-${itemIdx}`;
                 const status = getItemStatus(item);
-                let boxClass = "packer-box state-empty";
-                let boxContent = "";
-                let boxStyle = "";
-                let textClass = "";
-
-                if (status === 1) {
-                    boxClass = "packer-box state-ready";
-                    boxContent = `<span class="box-indicator"></span>`;
-                    textClass = "ready-item";
-                } else if (status === 2) {
-                    boxClass = "packer-box state-packed";
-                    boxContent = `<span class="box-indicator"><svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>`;
-                    boxStyle = `background-color: ${list.color || '#4f46e5'}; border-color: ${list.color || '#4f46e5'};`;
-                    textClass = "checked-item";
-                }
+                let boxClass = "packer-box " + (status === 1 ? "state-ready" : status === 2 ? "state-packed" : "state-empty");
+                let boxContent = status === 1
+                    ? `<span class="box-indicator"></span>`
+                    : status === 2
+                    ? `<span class="box-indicator"><svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>`
+                    : '';
+                let boxStyle = status === 2 ? `background-color: ${list.color || '#4f46e5'}; border-color: ${list.color || '#4f46e5'};` : '';
+                let textClass = status === 2 ? "checked-item" : "";
+                let rowBgClass = status === 2
+                    ? "bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-800/50"
+                    : "hover:bg-slate-50 dark:hover:bg-slate-800/40 border border-transparent";
 
                 const statusTitles = ["Offen (Klick: Liegt bereit)", "Liegt bereit (Klick: Eingepackt)", "Eingepackt (Klick: Zurücksetzen)"];
 
                 return `
                             <div id="${itemId}" class="item-row overflow-hidden" ondragstart="handleDragStart(event, 'item', ${itemIdx}, ${catIdx})" ondragover="handleDragOver(event, 'item', ${itemIdx}, ${catIdx})" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, 'item', ${itemIdx}, ${catIdx})" ondragend="handleDragEnd(event)">
-                                <div class="flex items-center gap-2 md:gap-3 p-2 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-800/40 group relative transition-colors ${status === 1 ? 'bg-pink-50/40 dark:bg-pink-950/20' : ''}">
+                                <div id="${itemInnerId}" class="flex items-center gap-2 md:gap-3 p-2 rounded-2xl group relative transition-colors ${rowBgClass}">
                                     <div class="grip-handle text-slate-200 dark:text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" onmousedown="enableDrag('${itemId}', true)" onmouseup="enableDrag('${itemId}', false)" onmouseleave="enableDrag('${itemId}', false)"><i data-lucide="grip-vertical" class="w-4 h-4"></i></div>
-                                    <button type="button" onclick="cycleItemStatus(${catIdx}, ${itemIdx})" class="${boxClass}" style="${boxStyle}" title="${statusTitles[status]}" aria-label="${statusTitles[status]}">
+                                    <button id="${itemBoxId}" type="button" onclick="cycleItemStatus(${catIdx}, ${itemIdx})" class="${boxClass}" style="${boxStyle}" title="${statusTitles[status]}" aria-label="${statusTitles[status]}">
                                         ${boxContent}
                                     </button>
 
@@ -359,33 +365,31 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
                                     <div class="ml-10 md:ml-14 space-y-1 border-l-2 border-slate-100 dark:border-slate-800 pl-3 md:pl-4 transition-colors">
                                         ${item.subItems.map((sub, subIdx) => {
                     const subId = `sub-item-${catIdx}-${itemIdx}-${subIdx}`;
+                    const subInnerId = `sub-inner-${catIdx}-${itemIdx}-${subIdx}`;
+                    const subBoxId = `sub-box-${catIdx}-${itemIdx}-${subIdx}`;
                     const subInputId = `subinput-${catIdx}-${itemIdx}-${subIdx}`;
                     const subStatus = getItemStatus(sub);
-                    let subBoxClass = "packer-box sub-box state-empty";
-                    let subBoxContent = "";
-                    let subBoxStyle = "";
-                    let subTextClass = "";
-
-                    if (subStatus === 1) {
-                        subBoxClass = "packer-box sub-box state-ready";
-                        subBoxContent = `<span class="box-indicator"></span>`;
-                        subTextClass = "ready-item";
-                    } else if (subStatus === 2) {
-                        subBoxClass = "packer-box sub-box state-packed";
-                        subBoxContent = `<span class="box-indicator"><svg class="w-2.5 h-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>`;
-                        subBoxStyle = `background-color: ${list.color || '#4f46e5'}; border-color: ${list.color || '#4f46e5'};`;
-                        subTextClass = "checked-item";
-                    }
+                    let subBoxClass = "packer-box sub-box " + (subStatus === 1 ? "state-ready" : subStatus === 2 ? "state-packed" : "state-empty");
+                    let subBoxContent = subStatus === 1
+                        ? `<span class="box-indicator"></span>`
+                        : subStatus === 2
+                        ? `<span class="box-indicator"><svg class="w-2.5 h-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>`
+                        : '';
+                    let subBoxStyle = subStatus === 2 ? `background-color: ${list.color || '#4f46e5'}; border-color: ${list.color || '#4f46e5'};` : '';
+                    let subTextClass = subStatus === 2 ? "checked-item" : "";
+                    let subRowBgClass = subStatus === 2
+                        ? "bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/50 dark:border-blue-800/40"
+                        : "hover:bg-slate-50 dark:hover:bg-slate-800/50 border border-transparent";
 
                     return `
-                                            <div id="${subId}" class="flex items-center gap-2 p-1 group/sub rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors overflow-hidden ${subStatus === 1 ? 'bg-pink-50/30 dark:bg-pink-950/15' : ''}"
+                                            <div id="${subInnerId}" class="flex items-center gap-2 p-1.5 group/sub rounded-xl transition-colors overflow-hidden ${subRowBgClass}"
                                                  ondragstart="handleDragStart(event, 'subitem', ${subIdx}, ${itemIdx}, ${catIdx})"
                                                  ondragover="handleDragOver(event, 'subitem', ${subIdx}, ${itemIdx}, ${catIdx})"
                                                  ondragleave="handleDragLeave(event)"
                                                  ondrop="handleDrop(event, 'subitem', ${subIdx}, ${itemIdx}, ${catIdx})"
                                                  ondragend="handleDragEnd(event)">
                                                 <div class="grip-handle text-slate-100 dark:text-slate-800 opacity-0 group-hover/sub:opacity-100 flex-shrink-0 transition-opacity" onmousedown="enableDrag('${subId}', true)" onmouseup="enableDrag('${subId}', false)" onmouseleave="enableDrag('${subId}', false)"><i data-lucide="grip-vertical" class="w-3.5 h-3.5"></i></div>
-                                                <button type="button" onclick="cycleSubItemStatus(${catIdx}, ${itemIdx}, ${subIdx})" class="${subBoxClass}" style="${subBoxStyle}" title="${statusTitles[subStatus]}" aria-label="${statusTitles[subStatus]}">
+                                                <button id="${subBoxId}" type="button" onclick="cycleSubItemStatus(${catIdx}, ${itemIdx}, ${subIdx})" class="${subBoxClass}" style="${subBoxStyle}" title="${statusTitles[subStatus]}" aria-label="${statusTitles[subStatus]}">
                                                     ${subBoxContent}
                                                 </button>
 
@@ -657,6 +661,113 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
         if(input) { input.focus(); input.select(); }
     }
 
+    function updateItemDOM(catIdx, itemIdx) {
+        const list = lists.find(l => l.id === activeListId);
+        if (!list) return;
+        const item = list.categories[catIdx].items[itemIdx];
+        const status = getItemStatus(item);
+
+        const boxBtn = document.getElementById(`item-box-${catIdx}-${itemIdx}`);
+        const textInput = document.getElementById(`input-${catIdx}-${itemIdx}`);
+        const innerRow = document.getElementById(`item-inner-${catIdx}-${itemIdx}`);
+
+        const statusTitles = ["Offen (Klick: Liegt bereit)", "Liegt bereit (Klick: Eingepackt)", "Eingepackt (Klick: Zurücksetzen)"];
+
+        if (boxBtn) {
+            boxBtn.className = "packer-box " + (status === 1 ? "state-ready" : status === 2 ? "state-packed" : "state-empty");
+            boxBtn.style = status === 2 ? `background-color: ${list.color || '#4f46e5'}; border-color: ${list.color || '#4f46e5'};` : '';
+            boxBtn.title = statusTitles[status];
+            boxBtn.setAttribute('aria-label', statusTitles[status]);
+            boxBtn.innerHTML = status === 1
+                ? `<span class="box-indicator"></span>`
+                : status === 2
+                ? `<span class="box-indicator"><svg class="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>`
+                : '';
+        }
+
+        if (textInput) {
+            textInput.classList.toggle('checked-item', status === 2);
+        }
+
+        if (innerRow) {
+            if (status === 2) {
+                innerRow.className = "flex items-center gap-2 md:gap-3 p-2 rounded-2xl group relative transition-colors bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-800/50";
+            } else {
+                innerRow.className = "flex items-center gap-2 md:gap-3 p-2 rounded-2xl group relative transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40 border border-transparent";
+            }
+        }
+
+        updateEditorProgressStats(list);
+    }
+
+    function updateSubItemDOM(catIdx, itemIdx, subIdx) {
+        const list = lists.find(l => l.id === activeListId);
+        if (!list) return;
+        const sub = list.categories[catIdx].items[itemIdx].subItems[subIdx];
+        const status = getItemStatus(sub);
+
+        const subBoxBtn = document.getElementById(`sub-box-${catIdx}-${itemIdx}-${subIdx}`);
+        const subTextInput = document.getElementById(`subinput-${catIdx}-${itemIdx}-${subIdx}`);
+        const subInnerRow = document.getElementById(`sub-inner-${catIdx}-${itemIdx}-${subIdx}`);
+
+        const statusTitles = ["Offen (Klick: Liegt bereit)", "Liegt bereit (Klick: Eingepackt)", "Eingepackt (Klick: Zurücksetzen)"];
+
+        if (subBoxBtn) {
+            subBoxBtn.className = "packer-box sub-box " + (status === 1 ? "state-ready" : status === 2 ? "state-packed" : "state-empty");
+            subBoxBtn.style = status === 2 ? `background-color: ${list.color || '#4f46e5'}; border-color: ${list.color || '#4f46e5'};` : '';
+            subBoxBtn.title = statusTitles[status];
+            subBoxBtn.setAttribute('aria-label', statusTitles[status]);
+            subBoxBtn.innerHTML = status === 1
+                ? `<span class="box-indicator"></span>`
+                : status === 2
+                ? `<span class="box-indicator"><svg class="w-2.5 h-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>`
+                : '';
+        }
+
+        if (subTextInput) {
+            subTextInput.classList.toggle('checked-item', status === 2);
+        }
+
+        if (subInnerRow) {
+            if (status === 2) {
+                subInnerRow.className = "flex items-center gap-2 p-1.5 group/sub rounded-xl transition-colors overflow-hidden bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/50 dark:border-blue-800/40";
+            } else {
+                subInnerRow.className = "flex items-center gap-2 p-1.5 group/sub rounded-xl transition-colors overflow-hidden hover:bg-slate-50 dark:hover:bg-slate-800/50 border border-transparent";
+            }
+        }
+
+        updateEditorProgressStats(list);
+    }
+
+    function updateEditorProgressStats(list) {
+        if (!list) list = lists.find(l => l.id === activeListId);
+        if (!list) return;
+
+        const totalItems = list.categories.reduce((acc, cat) => acc + (cat.items || []).length, 0);
+        const packedItems = list.categories.reduce((acc, cat) => acc + (cat.items || []).filter(i => getItemStatus(i) === 2).length, 0);
+        const readyItems = list.categories.reduce((acc, cat) => acc + (cat.items || []).filter(i => getItemStatus(i) === 1).length, 0);
+        const progressPercent = totalItems === 0 ? 0 : Math.round((packedItems / totalItems) * 100);
+
+        const statsText = document.getElementById('editorStatsText');
+        const readyText = document.getElementById('editorReadyText');
+        const progressBar = document.getElementById('editorProgressBar');
+
+        if (statsText) statsText.innerText = `${packedItems} von ${totalItems} Dingen eingepackt (${progressPercent}%)`;
+        if (readyText) {
+            if (readyItems > 0) {
+                readyText.className = "text-pink-500 font-bold flex items-center gap-1.5";
+                readyText.innerHTML = `<span class="w-2 h-2 rounded-full bg-pink-400"></span>${readyItems} bereit`;
+            } else {
+                readyText.className = "hidden";
+                readyText.innerHTML = "";
+            }
+        }
+        if (progressBar) {
+            progressBar.style.width = `${progressPercent}%`;
+            progressBar.style.backgroundColor = list.color || '#4f46e5';
+        }
+    }
+
     function cycleItemStatus(catIdx, itemIdx) {
         const list = lists.find(l => l.id === activeListId);
         if (!list) return;
@@ -666,7 +777,7 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
         item.status = next;
         item.checked = (next === 2);
         save();
-        renderEditor();
+        updateItemDOM(catIdx, itemIdx);
     }
 
     function cycleSubItemStatus(catIdx, itemIdx, subIdx) {
@@ -678,7 +789,7 @@ let lists = JSON.parse(localStorage.getItem('universal_packer_storage')) || [];
         sub.status = next;
         sub.checked = (next === 2);
         save();
-        renderEditor();
+        updateSubItemDOM(catIdx, itemIdx, subIdx);
     }
 
     function toggleSubItem(catIdx, itemIdx, subIdx) { cycleSubItemStatus(catIdx, itemIdx, subIdx); }
